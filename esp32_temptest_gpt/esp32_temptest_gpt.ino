@@ -7,9 +7,8 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
-const char* ssid = "AP";
-const char* password = "password";
-const char* serverUrl = "http://192.1.1.1:8080/temperature";
+// device configuration
+#include "local_config.h"
 
 // NTP server and time zone
 const char* ntpServer = "pool.ntp.org"                                                                                                                                            ;
@@ -19,14 +18,15 @@ const int daylightOffset_sec = 3600;
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, ntpServer, gmtOffset_sec, daylightOffset_sec);
 
-// Pin for DS18B20 data line
+// DS18B20 device
 const int oneWirePin = 4;
-
-// DS18B20 device object
 OneWire oneWire(oneWirePin);
 DallasTemperature sensors(&oneWire);
 
-void setup() {
+bool firstRun = true;
+
+void setup()
+{
   Serial.begin(115200);
 
   // Connect to WiFi
@@ -45,14 +45,12 @@ void setup() {
   // Print WiFi information
   Serial.println("Connected to the WiFi network");
   Serial.println(WiFi.localIP());
+  
   timeClient.update();
 }
 
 void loop() {  
   
-  // Update time from NTP server
-//  timeClient.update();
-
   // Read temperature from sensor
   float temperature = readTemperature();
 
@@ -61,23 +59,18 @@ void loop() {
   time_t rawTime = timeClient.getEpochTime();
   ts = *localtime(&rawTime);
    
-//  strftime(currentTimeString, sizeof(currentTimeString), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
   strftime(currentTimeString, sizeof(currentTimeString), "%Y-%m-%dT%H:%M:%S-01:00", &ts);
-
 
   // Create JSON object with temperature reading
   StaticJsonDocument<200> doc;
-  doc["sensor_id"] = "esp32_sensor";
+  doc["sensor_id"] = sensorName;
   doc["temperature"] = temperature;
   doc["timestamp"] = currentTimeString;
-//  doc["timestamp"] = String(millis());
 
   // Convert JSON object to string
   String jsonString;
   serializeJson(doc, jsonString);
 
-  Serial.println(jsonString);
-  
   // Create HTTP client and send POST request
   HTTPClient http;
   http.begin(serverUrl);
@@ -92,14 +85,21 @@ void loop() {
     Serial.printf("Error sending POST request: %s\n", http.errorToString(httpCode).c_str());
   }
 
-  // Wait for some time before sending the next reading
-  delay(10000);
+  // first run? make a random delay before continuing
+  if (firstRun == true)
+  {
+      sleep(random(update_period_s));
+      firstRun = false;
+  }
+
+  // Wait before sending the next reading
+  delay(update_period_s);
 }
 
-// Replace this function with code to read the temperature from your sensor
-float readTemperature() {
+float readTemperature()
+{
     // Read temperature from DS18B20 sensor
+    // TODO: support more sensors
   sensors.requestTemperatures();
   return sensors.getTempCByIndex(0);
 }
-
