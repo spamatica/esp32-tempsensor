@@ -29,6 +29,8 @@ void setup()
 {
   Serial.begin(115200);
 
+  delay(1000);
+
   // Connect to WiFi
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
@@ -47,12 +49,15 @@ void setup()
   Serial.println(WiFi.localIP());
   
   timeClient.update();
+  Serial.println("got ntp time");
 }
 
 void loop() {  
-  
+
+  Serial.println("going through temp read loop");
   // Read temperature from sensor
   float temperature = readTemperature();
+  Serial.println("got temperature");
 
   char currentTimeString[80];
   struct tm ts;
@@ -71,6 +76,8 @@ void loop() {
   String jsonString;
   serializeJson(doc, jsonString);
 
+  Serial.println(jsonString);
+
   // Create HTTP client and send POST request
   HTTPClient http;
   http.begin(serverUrl);
@@ -85,15 +92,18 @@ void loop() {
     Serial.printf("Error sending POST request: %s\n", http.errorToString(httpCode).c_str());
   }
 
+  Serial.println("before sleep");
+
   // first run? make a random delay before continuing
   if (firstRun == true)
   {
-      sleep(random(update_period_s));
+      Serial.println("first run");
+      delay(random(update_period_s * 1000));
       firstRun = false;
   }
 
   // Wait before sending the next reading
-  delay(update_period_s);
+  delay(update_period_s * 1000);
 }
 
 float readTemperature()
