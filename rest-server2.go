@@ -33,7 +33,7 @@ func temperatureHandler(w http.ResponseWriter, r *http.Request) {
 	// Open SQLite database
 	db, err := sql.Open("sqlite3", "./temperatures.db")
 	if err != nil {
-		http.Error(w, "Error opening database", http.StatusInternalServerError)
+		fmt.Printf("Error opening database")
 		return
 	}
 	defer db.Close()
@@ -42,14 +42,14 @@ func temperatureHandler(w http.ResponseWriter, r *http.Request) {
 	print(t.Timestamp + " " + t.SensorID + " " + "\n")
 	timestamp, err := time.Parse(time.RFC3339, t.Timestamp)
 	if err != nil {
-		http.Error(w, "Error parsing timestamp", http.StatusBadRequest)
+		fmt.Printf("Error parsing timestamp")
 		return
 	}
 
 	// Insert temperature reading into database
 	_, err = db.Exec("INSERT INTO readings (sensor_id, temperature, timestamp) VALUES (?, ?, ?)", t.SensorID, t.Temperature, timestamp)
 	if err != nil {
-		http.Error(w, "Error inserting temperature reading into database", http.StatusInternalServerError)
+		fmt.Printf("Error inserting temperature reading into database")
 		return
 	}
 
@@ -58,5 +58,5 @@ func temperatureHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	http.HandleFunc("/temperature", temperatureHandler)
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":7894", nil)
 }
