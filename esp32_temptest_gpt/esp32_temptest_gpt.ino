@@ -10,7 +10,7 @@
 // device configuration
 #include "local_config.h"
 
-// NTP server and time zone
+// NTP server and time zone´
 const char* ntpServer = "pool.ntp.org"                                                                                                                                            ;
 const long gmtOffset_sec = 3600;
 const int daylightOffset_sec = 3600;
@@ -25,6 +25,8 @@ DallasTemperature sensors(&oneWire);
 
 bool firstRun = true;
 
+int errorCount = 0;
+
 void setup()
 {
   Serial.begin(115200);
@@ -33,13 +35,21 @@ void setup()
 
   // Connect to WiFi
   WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
+  while (WiFi.status() != WL_CONNECTED)
+  {
     delay(1000);
-    Serial.println("Connecting to WiFi..");
+
+    Serial.println("Connecting to WiFi...");
+
+    errorCount++;
+
+    if (errorCount > 6)
+    {
+      ESP.restart();
+    }
   }
 
-  // Initialize NTP client
-  timeClient.begin();
+  errorCount = 0;
 
   // Initialize DS18B20 sensor
   sensors.begin();
@@ -48,17 +58,29 @@ void setup()
   Serial.println("Connected to the WiFi network");
   Serial.println(WiFi.localIP());
   
-  timeClient.update();
-  Serial.println("got ntp time");
+  // Initialize NTP client and update time
+  timeClient.begin();
+
+  while (timeClient.update() == false)
+  {
+    // We failed to get a valid time from NTP
+    errorCount++;
+
+    Serial.println("Failed to get NTP time");
+  }
+
+  Serial.println("got NTP time");
 }
 
-void loop() {  
-
+void loop()
+{
   Serial.println("going through temp read loop");
+
   // Read temperature from sensor
   float temperature = readTemperature();
   Serial.println("got temperature");
 
+  // format current time for inserting into json data
   char currentTimeString[80];
   struct tm ts;
   time_t rawTime = timeClient.getEpochTime();
@@ -74,30 +96,48 @@ void loop() {
 
   // Convert JSON object to string
   String jsonString;
+
   serializeJson(doc, jsonString);
 
   Serial.println(jsonString);
 
-  // Create HTTP client and send POST request
-  HTTPClient http;
-  http.begin(serverUrl);
-  http.addHeader("Content-Type", "application/json");
-  int httpCode = http.POST(jsonString);
+  do
+  {
+    // Create HTTP client and send POST request with temperature reading
+    HTTPClient http;
+    http.begin(serverUrl);
+    http.addHeader("Content-Type", "application/json");
+    int httpCode = http.POST(jsonString);
 
-  // Print result
-  if (httpCode > 0) {
-    Serial.printf("Response code: %d\n", httpCode);
-    Serial.println(http.getString());
-  } else {
-    Serial.printf("Error sending POST request: %s\n", http.errorToString(httpCode).c_str());
-  }
+    // Print result
+    if (httpCode > 0)
+    {
+      Serial.printf("Response code: %d\n", httpCode);
+      Serial.println(http.getString());
+      errorCount = 0;
+    }
+    else
+    {
+      Serial.printf("Error sending POST request: %s\n", http.errorToString(httpCode).c_str());
+      errorCount++;
+      delay(1000);
+    }
 
-  Serial.println("before sleep");
+    if (errorCount > 5)
+    {
+      ESP.restart();
+    }
+
+  } while (errorCount > 0);
+
+  Serial.println("Send json successful");
 
   // first run? make a random delay before continuing
+  // This is done so not all sensors that are started at the same time
+  // - maybe due to a power-out - will not report at the same time.
   if (firstRun == true)
   {
-      Serial.println("first run");
+      Serial.println("first run - add a random delay");
       delay(random(update_period_s * 1000));
       firstRun = false;
   }
@@ -108,8 +148,8 @@ void loop() {
 
 float readTemperature()
 {
-    // Read temperature from DS18B20 sensor
-    // TODO: support more sensors
+  // Read temperature from DS18B20 sensor
+  // TODO: support more sensors
   sensors.requestTemperatures();
   return sensors.getTempCByIndex(0);
 }
