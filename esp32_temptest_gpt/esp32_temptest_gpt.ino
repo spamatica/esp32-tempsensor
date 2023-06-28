@@ -24,8 +24,12 @@ OneWire oneWire(oneWirePin);
 DallasTemperature sensors(&oneWire);
 
 bool firstRun = true;
-
 int errorCount = 0;
+int pollCounter = 0;
+
+time_t lastSendTime = 0;
+
+float smoothedTemperature = 0.0;
 
 void setup()
 {
@@ -75,12 +79,56 @@ void setup()
 void loop()
 {
   Serial.println("going through temp read loop");
+  time_t currentTime = timeClient.getEpochTime();
 
   // Read temperature from sensor
   float temperature = readTemperature();
   Serial.println("got temperature");
 
-  // format current time for inserting into json data
+  // Smooth temperature reading
+  if (firstRun == true)
+  {
+    smoothedTemperature = temperature;
+    lastSendTime = currentTime;
+  }
+  else
+  {
+    smoothedTemperature = smoothedTemperature * 0.9 + temperature * 0.1;
+  }
+
+  if (currentTime - lastSendTime > update_period_s)
+  {
+    Serial.println("time to send");
+    lastSendTime = currentTime;
+    sendJsonToRestServer(smoothedTemperature);
+  }
+
+  // first run? make a random delay before continuing
+  // This is done so not all sensors that are started at the same time
+  // - maybe due to a power-out - will not report at the same time.
+  if (firstRun == true)
+  {
+      Serial.println("first run - add a random delay");
+      delay(random(update_period_s * 1000));
+      firstRun = false;
+  }
+
+  // Wait before sending the next reading
+  delay(60 * 1000);
+  pollCounter++;
+}
+
+float readTemperature()
+{
+  // Read temperature from DS18B20 sensor
+  // TODO: support more sensors
+  sensors.requestTemperatures();
+  return sensors.getTempCByIndex(0);
+}
+
+void sendJsonToRestServer(float temperature)
+{
+  // Create JSON document  // format current time for inserting into json data
   char currentTimeString[80];
   struct tm ts;
   time_t rawTime = timeClient.getEpochTime();
@@ -93,6 +141,7 @@ void loop()
   doc["sensor_id"] = sensorName;
   doc["temperature"] = temperature;
   doc["timestamp"] = currentTimeString;
+  doc["sensor_uptime"] = pollCounter;
 
   // Convert JSON object to string
   String jsonString;
@@ -131,25 +180,4 @@ void loop()
   } while (errorCount > 0);
 
   Serial.println("Send json successful");
-
-  // first run? make a random delay before continuing
-  // This is done so not all sensors that are started at the same time
-  // - maybe due to a power-out - will not report at the same time.
-  if (firstRun == true)
-  {
-      Serial.println("first run - add a random delay");
-      delay(random(update_period_s * 1000));
-      firstRun = false;
-  }
-
-  // Wait before sending the next reading
-  delay(update_period_s * 1000);
-}
-
-float readTemperature()
-{
-  // Read temperature from DS18B20 sensor
-  // TODO: support more sensors
-  sensors.requestTemperatures();
-  return sensors.getTempCByIndex(0);
 }

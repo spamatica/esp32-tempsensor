@@ -16,6 +16,13 @@ type temperatureReading struct {
 	Timestamp   string  `json:"timestamp"`
 }
 
+type temperatureReading_v2 struct {
+	SensorID    string  `json:"sensor_id"`
+	Temperature float64 `json:"temperature"`
+	Timestamp   string  `json:"timestamp"`
+	Timestamp   int     `json:"sensor_uptime"`
+}
+
 func temperatureHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
@@ -23,11 +30,22 @@ func temperatureHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	decoder := json.NewDecoder(r.Body)
-	var t temperatureReading
+
+	// first try to decode with v2 format
+	var t temperatureReading_v2
 	err := decoder.Decode(&t)
 	if err != nil {
-		http.Error(w, "Error decoding request body", http.StatusBadRequest)
-		return
+		// check if it's old format
+		var t_old temperatureReading
+		err := decoder.Decode(&t_old)
+		if err != nil {
+			http.Error(w, "Error decoding request body", http.StatusBadRequest)
+			return
+		}
+		t.SensorID = t_old.SensorID
+		t.Temperature = t_old.Temperature
+		t.Timestamp = t_old.Timestamp
+		t.sensor_uptime = 0
 	}
 
 	// Open SQLite database
@@ -47,7 +65,7 @@ func temperatureHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Insert temperature reading into database
-	_, err = db.Exec("INSERT INTO readings (sensor_id, temperature, timestamp) VALUES (?, ?, ?)", t.SensorID, t.Temperature, timestamp)
+	_, err = db.Exec("INSERT INTO readings (sensor_id, temperature, timestamp, sensor_uptime) VALUES (?, ?, ?, ?)", t.SensorID, t.Temperature, timestamp, t.sensor_uptime)
 	if err != nil {
 		fmt.Printf("Error inserting temperature reading into database")
 		return
