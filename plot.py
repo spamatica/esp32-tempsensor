@@ -58,11 +58,11 @@ def graph_data_vallen_2sensors():
     sensor1str = "vallen kok"
     sensor2str = "vallen ute"
     savedTemperatures=[]
-    oneweekago = datetime.datetime.now()- datetime.timedelta(days=7)
-    weekStr = oneweekago.strftime("%Y-%m-%d")
-    print(weekStr)
+    startTime = datetime.datetime.now()- datetime.timedelta(days=4)
+    startTimeStr = startTime.strftime("%Y-%m-%d")
+    print(startTimeStr)
     c.execute('SELECT sensor_id, temperature, timestamp FROM readings where timestamp > \'' + 
-     weekStr + '\' and (sensor_id like \'' +
+     startTimeStr + '\' and (sensor_id like \'' +
      sensor1str + '\' or sensor_id LIKE \'' + sensor2str + '\')')
     data = c.fetchall()
 
@@ -106,3 +106,4 @@ def graph_data_vallen_2sensors():
 # graph_data(["cirkelstigen1", "cirkelstigen2"])
 #graph_data(["vallen ute", "vallen kok"])
 graph_data_vallen_2sensors()
+
