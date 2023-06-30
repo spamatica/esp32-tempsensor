@@ -10,7 +10,7 @@ var trace1 = {
   name: 'Temp Ute',
   x: unpack(rows, 'date'),
   y: unpack(rows, 'temp_ute'),
-  line: {color: '#17BECF'}
+  line: {color: '#17BECF', width: 3}
 }
 
 var trace2 = {
@@ -19,19 +19,28 @@ var trace2 = {
   name: 'Temp Inne',
   x: unpack(rows, 'date'),
   y: unpack(rows, 'temp_inne'),
-  line: {color: '#7F7F7F'}
+  line: {color: '#7F7F7F', width: 3}
 }
 
 var data = [trace1,trace2];
 
+const now = new Date(Date.now());
+var numDays = 5;
+const lastWeek = new Date(Date.now() - 1000 * 3600 * 24 * numDays);
+
+console.log(now.toISOString());
+
+console.log("WOWOWO");
+
 var layout = {
   title: 'Vallen väder',
-  width: 1024,
-  height: 512,
+  width: 1300,
+  height: 900,
   xaxis: {
-    autorange: true,
-    range: ['2023-01-01', '2023-12-16'],
-    rangeselector: {buttons: [
+    //autorange: true,
+    range: [lastWeek, now], 
+    rangeselector: {
+      buttons: [
         {
           count: 1,
           label: '1d',
@@ -42,7 +51,8 @@ var layout = {
           count: 7,
           label: '1w',
           step: 'day',
-          stepmode: 'backward'
+          stepmode: 'backward',
+	  active: true
         },
         {
           count: 1,
@@ -50,9 +60,12 @@ var layout = {
           step: 'month',
           stepmode: 'backward'
         },
-        {step: 'all'}
+        {
+		  step: 'all'
+	}
       ]},
-    rangeslider: {range: ['2023-01-01', '2023-12-16']},
+    // gives a slider
+    //rangeslider: {range: ['2023-01-01', '2023-12-31']}, 
     type: 'date'
   },
   yaxis: {

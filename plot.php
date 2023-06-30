@@ -10,12 +10,10 @@
 <body>
     <img src="temperature_readings.png">
 
-<div id="weathergraph" style="width:1200px;height:60px;"></div>
-
-<script src="tempplot.js"></script>
-
 <br><br><br>
 <?php include "temperature_dates.inc" ?>
+<br>
+<a href="plot2.php">Dynamic temperature plot</a>
 
 </body>
 
