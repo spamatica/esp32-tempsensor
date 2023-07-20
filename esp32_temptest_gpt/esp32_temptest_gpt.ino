@@ -96,7 +96,7 @@ void loop()
     smoothedTemperature = smoothedTemperature * 0.9 + temperature * 0.1;
   }
 
-  if (currentTime - lastSendTime > update_period_s)
+  if (firstRun || (currentTime - lastSendTime > update_period_s))
   {
     Serial.println("time to send");
     lastSendTime = currentTime;
