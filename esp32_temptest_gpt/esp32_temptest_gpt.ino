@@ -7,29 +7,17 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
+#include "esp32_temptest_gpt.h"
+
 // device configuration
 #include "local_config.h"
-
-// NTP server and time zone´
-const char* ntpServer = "pool.ntp.org"                                                                                                                                            ;
-const long gmtOffset_sec = 3600;
-const int daylightOffset_sec = 3600;
 
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, ntpServer, gmtOffset_sec, daylightOffset_sec);
 
 // DS18B20 device
-const int oneWirePin = 4;
 OneWire oneWire(oneWirePin);
 DallasTemperature sensors(&oneWire);
-
-bool firstRun = true;
-int errorCount = 0;
-int pollCounter = 0;
-
-time_t lastSendTime = 0;
-
-float smoothedTemperature = 0.0;
 
 void setup()
 {
