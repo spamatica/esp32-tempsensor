@@ -16,13 +16,22 @@ var trace1 = {
 var trace2 = {
   type: "scatter",
   mode: "lines",
-  name: 'Temp Inne',
+  name: 'Temp Kok',
   x: unpack(rows, 'date'),
-  y: unpack(rows, 'temp_inne'),
+  y: unpack(rows, 'temp_kok'),
   line: {color: '#7F7F7F', width: 3}
 }
 
-var data = [trace1,trace2];
+var trace3 = {
+  type: "scatter",
+  mode: "lines",
+  name: 'Temp Rum',
+  x: unpack(rows, 'date'),
+  y: unpack(rows, 'temp_rum'),
+  line: { color: '#AF4F4F', width: 3}
+}
+
+var data = [trace1,trace2, trace3];
 
 const now = new Date(Date.now());
 var numDays = 5;
