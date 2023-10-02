@@ -120,18 +120,18 @@ def graph_data_3sensors(sensor1str, sensor2str, sensor3str):
         plt.plot(dates,temperatures3, label=label3Str, linewidth=3)
 
     plt.legend(loc="center right")
-    plt.savefig(webPath + '/temperature_readings.png')
+    plt.savefig(webPath + '/temperature_readings_ladugard.png')
 
-    f = open(webPath + "/temperature_dates.inc", "w")
-    f.write(currentDate1Str)
-    f.write("<br>")
-    f.write(currentDate2Str)
-    f.write("<br>")
-    f.write(currentDate3Str)
+    # f = open(webPath + "/temperature_dates.inc", "w")
+    # f.write(currentDate1Str)
+    # f.write("<br>")
+    # f.write(currentDate2Str)
+    # f.write("<br>")
+    # f.write(currentDate3Str)
 
 #########
 sensor1str = "vallen ute"
 sensor2str = "vallen kok"
-sensor3str = "vallen rum"
+sensor3str = "vallen ladugard"
 graph_data_3sensors(sensor1str, sensor2str, sensor3str)
 

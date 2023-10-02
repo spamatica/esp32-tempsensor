@@ -10,7 +10,7 @@ var trace1 = {
   name: 'Temp Ute',
   x: unpack(rows, 'date'),
   y: unpack(rows, 'temp_ute'),
-  line: {color: '#17BECF', width: 3}
+  line: {color: 'blue', width: 3}
 }
 
 var trace2 = {
@@ -19,7 +19,7 @@ var trace2 = {
   name: 'Temp Kok',
   x: unpack(rows, 'date'),
   y: unpack(rows, 'temp_kok'),
-  line: {color: '#7F7F7F', width: 3}
+  line: {color: 'darkorange', width: 3}
 }
 
 var trace3 = {
@@ -28,7 +28,7 @@ var trace3 = {
   name: 'Temp Rum',
   x: unpack(rows, 'date'),
   y: unpack(rows, 'temp_rum'),
-  line: { color: '#AF4F4F', width: 3}
+  line: { color: 'green', width: 3}
 }
 
 var data = [trace1,trace2, trace3];
