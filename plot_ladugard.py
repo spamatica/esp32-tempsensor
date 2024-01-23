@@ -119,7 +119,7 @@ def graph_data_3sensors(sensor1str, sensor2str, sensor3str):
         label3Str = "{0:0.1f}".format(sensor3Temp)
         plt.plot(dates,temperatures3, label=label3Str, linewidth=3)
 
-    plt.legend(loc="center right")
+    plt.legend(loc="center left")
     plt.savefig(webPath + '/temperature_readings_ladugard.png')
 
     # f = open(webPath + "/temperature_dates.inc", "w")

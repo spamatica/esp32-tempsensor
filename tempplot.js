@@ -31,7 +31,16 @@ var trace3 = {
   line: { color: 'green', width: 3}
 }
 
-var data = [trace1,trace2, trace3];
+var trace4 = {
+  type: "scatter",
+  mode: "lines",
+  name: 'Temp Ladugard',
+  x: unpack(rows, 'date'),
+  y: unpack(rows, 'temp_ladugard'),
+  line: { color: 'brown', width: 3}
+}
+
+var data = [trace1, trace2, trace3, trace4];
 
 const now = new Date(Date.now());
 var numDays = 5;

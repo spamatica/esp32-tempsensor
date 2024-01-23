@@ -54,7 +54,7 @@ def graph_data(sensor_names):
     plt.savefig(webPath + '/temperature_readings.png', dpi=300)
     #plt.show()
 
-def graph_data_3sensors(sensor1str, sensor2str, sensor3str):
+def graph_data_4sensors(sensor1str, sensor2str, sensor3str, sensor4str):
     savedTemperatures=[]
     startTime = datetime.datetime.now()- datetime.timedelta(days=4)
     startTimeStr = startTime.strftime("%Y-%m-%d")
@@ -66,6 +66,8 @@ def graph_data_3sensors(sensor1str, sensor2str, sensor3str):
          sqlStr += '\' or sensor_id LIKE \'' + sensor2str
     if sensor3str != "":
          sqlStr += '\' or sensor_id LIKE \'' + sensor3str
+    if sensor4str != "":
+         sqlStr += '\' or sensor_id LIKE \'' + sensor4str
     sqlStr += '\')'
 
     c.execute(sqlStr)
@@ -74,17 +76,21 @@ def graph_data_3sensors(sensor1str, sensor2str, sensor3str):
     sensor1Temp = 0
     sensor2Temp = 0
     sensor3Temp = 0
+    sensor4Temp = 0
     dates = []
     temperatures1 = []
     temperatures2 = []
     temperatures3 = []
+    temperatures4 = []
     currentDate = 0
     currentDate1Str = ""
     currentDate2Str = ""
-    currentData3Str = ""
+    currentDate3Str = ""
+    currentDate4Str = ""
     gotTemp1 = False
     gotTemp2 = False
     gotTemp3 = False
+    gotTemp4 = False
 
     for row in data:
         if row[0] == sensor1str:
@@ -100,13 +106,18 @@ def graph_data_3sensors(sensor1str, sensor2str, sensor3str):
             currentDate3Str = row[2]
             sensor3Temp = row[1]
             gotTemp3 = True
+        elif row[0] == sensor4str:
+            currentDate4Str = row[2]
+            sensor4Temp = row[1]
+            gotTemp4 = True
 
-        if gotTemp1 and gotTemp2 and gotTemp3:
+        if gotTemp1 and gotTemp2 and gotTemp3 and gotTemp4:
             # when we got samples from all sensors we start populating the plot
             dates.append(currentDate) # date from sensor1 (the granularity is high enough that it does not matter)
             temperatures1.append(sensor1Temp)
             temperatures2.append(sensor2Temp)
             temperatures3.append(sensor3Temp)
+            temperatures4.append(sensor4Temp)
 
     label1Str = "{0:0.1f}".format(sensor1Temp)
     plt.plot(dates,temperatures1, label=label1Str, linewidth=3)
@@ -119,7 +130,11 @@ def graph_data_3sensors(sensor1str, sensor2str, sensor3str):
         label3Str = "{0:0.1f}".format(sensor3Temp)
         plt.plot(dates,temperatures3, label=label3Str, linewidth=3)
 
-    plt.legend(loc="center right")
+    if sensor4str != "":
+        label4Str = "{0:0.1f}".format(sensor4Temp)
+        plt.plot(dates,temperatures4, label=label4Str, linewidth=3)
+
+    plt.legend(loc="center left")
     plt.savefig(webPath + '/temperature_readings.png')
 
     f = open(webPath + "/temperature_dates.inc", "w")
@@ -128,10 +143,13 @@ def graph_data_3sensors(sensor1str, sensor2str, sensor3str):
     f.write(currentDate2Str)
     f.write("<br>")
     f.write(currentDate3Str)
+    f.write("<br>")
+    f.write(currentDate4Str)
 
 #########
 sensor1str = "vallen ute"
 sensor2str = "vallen kok"
 sensor3str = "vallen rum"
-graph_data_3sensors(sensor1str, sensor2str, sensor3str)
+sensor4str = "vallen ladugard"
+graph_data_4sensors(sensor1str, sensor2str, sensor3str, sensor4str)
 
