@@ -6,11 +6,12 @@
 #include <time.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
-
-#include "esp32_temptest_gpt.h"
+#include <esp_task_wdt.h>
 
 // device configuration
 #include "local_config.h"
+
+#include "esp32_temptest_gpt.h"
 
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, ntpServer, gmtOffset_sec, daylightOffset_sec);
@@ -19,10 +20,20 @@ NTPClient timeClient(ntpUDP, ntpServer, gmtOffset_sec, daylightOffset_sec);
 OneWire oneWire(oneWirePin);
 DallasTemperature sensors(&oneWire);
 
-void setup()
+void initWDT()
 {
-  Serial.begin(115200);
+  esp_task_wdt_init(WDT_TIMEOUT, true);  // enable panic so ESP32 restarts
+  esp_task_wdt_add(NULL);                // add current thread to WDT watch
 
+  esp_reset_reason_t bootReason = esp_reset_reason();
+  // TODO handle
+  // ESP_RST_WDT == wdt
+  // ESP_RST_POWERON == normal power on
+}
+
+void initWifi()
+{
+  // let the device be active a while before we try to connect to WIFI
   delay(1000);
 
   // Connect to WiFi
@@ -42,14 +53,13 @@ void setup()
   }
 
   errorCount = 0;
-
-  // Initialize DS18B20 sensor
-  sensors.begin();
-
   // Print WiFi information
   Serial.println("Connected to the WiFi network");
   Serial.println(WiFi.localIP());
-  
+}
+
+void initTime()
+{
   // Initialize NTP client and update time
   timeClient.begin();
 
@@ -64,13 +74,74 @@ void setup()
   Serial.println("got NTP time");
 }
 
+void enumerateDevices()
+{
+  
+}
+
+void initSensors()
+{
+  byte i;
+  DeviceAddress addr;
+
+  // Initialize DS18B20 sensor
+  sensors.begin();
+  int cnt = sensors.getDeviceCount();
+  int cnt2 = 0;
+
+  while (oneWire.search(addr))
+  {
+    memcpy(sensorIds[cnt2], addr, 8);
+
+    sprintf(sensorNames[cnt2],   "%1x%1x%1x%1x", addr[0], addr[1], addr[2], addr[3]);
+    sprintf(sensorNames[cnt2]+8, "%1x%1x%1x%1x", addr[0], addr[1], addr[2], addr[3]);
+
+#ifdef PRINT_ADDRESS
+    Serial.print(" ROM =");
+    for (i = 0; i < 8; i++)
+    {
+      Serial.write(' ');
+      Serial.print(addr[i], HEX);
+      cnt2++;
+    }
+    Serial.println();
+  }
+  Serial.println(" No more addresses.");
+  Serial.println();
+#else
+  }
+#endif
+
+  oneWire.reset_search();
+  delay(250);
+
+  if (cnt2 != cnt)
+  {
+    Serial.println("Warning: number of devices incorrect!");
+  }
+
+  numberOfSensors = cnt;
+}
+
+void setup()
+{
+  initWDT();
+
+  Serial.begin(115200);
+
+  initWifi();
+
+  initSensors();
+
+  initTime();
+}
+
 void loop()
 {
+  esp_task_wdt_reset();            // Reset the Watch Dog Timer
+
   Serial.println("going through temp read loop");
   time_t currentTime = timeClient.getEpochTime();
-
-  // Uncomment to find sensor id's
-  //debugEnumerateDevices();
 
   for (int i = 0; i < numberOfSensors; i++)
   {
@@ -181,24 +252,4 @@ void sendJsonToRestServer(float temperature, const char *sensorName)
   } while (errorCount > 0);
 
   Serial.println("Send json successful");
-}
-
-void debugEnumerateDevices()
-{
-  byte i;
-  byte addr[8];
-  
-  while (oneWire.search(addr)) {
-    Serial.print(" ROM =");
-    for (i = 0; i < 8; i++) {
-      Serial.write(' ');
-      Serial.print(addr[i], HEX);
-    }
-    Serial.println();
-  }
-  Serial.println(" No more addresses.");
-  Serial.println();
-  oneWire.reset_search();
-  delay(250);
-
 }
