@@ -10,19 +10,37 @@ var trace1 = {
   name: 'Temp Ute',
   x: unpack(rows, 'date'),
   y: unpack(rows, 'temp_ute'),
-  line: {color: '#17BECF', width: 3}
+  line: {color: 'blue', width: 3}
 }
 
 var trace2 = {
   type: "scatter",
   mode: "lines",
-  name: 'Temp Inne',
+  name: 'Temp Kok',
   x: unpack(rows, 'date'),
-  y: unpack(rows, 'temp_inne'),
-  line: {color: '#7F7F7F', width: 3}
+  y: unpack(rows, 'temp_kok'),
+  line: {color: 'darkorange', width: 3}
 }
 
-var data = [trace1,trace2];
+var trace3 = {
+  type: "scatter",
+  mode: "lines",
+  name: 'Temp Rum',
+  x: unpack(rows, 'date'),
+  y: unpack(rows, 'temp_rum'),
+  line: { color: 'green', width: 3}
+}
+
+var trace4 = {
+  type: "scatter",
+  mode: "lines",
+  name: 'Temp Ladugard',
+  x: unpack(rows, 'date'),
+  y: unpack(rows, 'temp_ladugard'),
+  line: { color: 'brown', width: 3}
+}
+
+var data = [trace1, trace2, trace3, trace4];
 
 const now = new Date(Date.now());
 var numDays = 5;
