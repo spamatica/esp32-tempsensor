@@ -69,26 +69,32 @@ void loop()
   Serial.println("going through temp read loop");
   time_t currentTime = timeClient.getEpochTime();
 
-  // Read temperature from sensor
-  float temperature = readTemperature();
-  Serial.println("got temperature");
+  // Uncomment to find sensor id's
+  //debugEnumerateDevices();
 
-  // Smooth temperature reading
-  if (firstRun == true)
+  for (int i = 0; i < numberOfSensors; i++)
   {
-    smoothedTemperature = temperature;
-    lastSendTime = currentTime;
-  }
-  else
-  {
-    smoothedTemperature = smoothedTemperature * 0.9 + temperature * 0.1;
-  }
+    // Read temperature from sensor
+    float temperature = readTemperature(sensorIds[i]);
+    Serial.printf("got temperature %f\n", temperature);
 
-  if (firstRun || (currentTime - lastSendTime > update_period_s))
-  {
-    Serial.println("time to send");
-    lastSendTime = currentTime;
-    sendJsonToRestServer(smoothedTemperature);
+    // Smooth temperature reading
+    if (firstRun == true)
+    {
+      smoothedTemperature[i] = temperature;
+      lastSendTime[i] = currentTime;
+    }
+    else
+    {
+      smoothedTemperature[i] = smoothedTemperature[i] * 0.95 + temperature * 0.05;
+    }
+
+    if (firstRun || (currentTime - lastSendTime[i] > update_period_s))
+    {
+      Serial.println("time to send");
+      lastSendTime[i] = currentTime;
+      sendJsonToRestServer(smoothedTemperature[i], sensorNames[i]);
+    }
   }
 
   // first run? make a random delay before continuing
@@ -106,15 +112,19 @@ void loop()
   pollCounter++;
 }
 
-float readTemperature()
+float readTemperature(DeviceAddress sensorId)
 {
   // Read temperature from DS18B20 sensor
-  // TODO: support more sensors
   sensors.requestTemperatures();
-  return sensors.getTempCByIndex(0);
+  // int n = sensors.getDeviceCount();
+  // for (int i = 0; i < n; i++)
+  // {
+  //   Serial.printf("temp %d %f\n", i, sensors.getTempCByIndex(i));
+  // }
+  return sensors.getTempC(sensorId);
 }
 
-void sendJsonToRestServer(float temperature)
+void sendJsonToRestServer(float temperature, const char *sensorName)
 {
   // Create JSON document  // format current time for inserting into json data
   char currentTimeString[80];
@@ -144,7 +154,10 @@ void sendJsonToRestServer(float temperature)
     HTTPClient http;
     http.begin(serverUrl);
     http.addHeader("Content-Type", "application/json");
-    int httpCode = http.POST(jsonString);
+    int httpCode = 200;
+
+    // comment for head-less testing
+    httpCode = http.POST(jsonString);
 
     // Print result
     if (httpCode > 0)
@@ -168,4 +181,24 @@ void sendJsonToRestServer(float temperature)
   } while (errorCount > 0);
 
   Serial.println("Send json successful");
+}
+
+void debugEnumerateDevices()
+{
+  byte i;
+  byte addr[8];
+  
+  while (oneWire.search(addr)) {
+    Serial.print(" ROM =");
+    for (i = 0; i < 8; i++) {
+      Serial.write(' ');
+      Serial.print(addr[i], HEX);
+    }
+    Serial.println();
+  }
+  Serial.println(" No more addresses.");
+  Serial.println();
+  oneWire.reset_search();
+  delay(250);
+
 }
