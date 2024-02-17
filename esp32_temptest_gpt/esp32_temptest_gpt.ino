@@ -20,6 +20,20 @@ NTPClient timeClient(ntpUDP, ntpServer, gmtOffset_sec, daylightOffset_sec);
 OneWire oneWire(oneWirePin);
 DallasTemperature sensors(&oneWire);
 
+void delayWithPatWatchdog(int ms)
+{
+  int incr = 0;
+  while (incr != ms)
+  {
+    incr++;
+    if (incr % 1000) // pat watchdog every second
+    {
+      esp_task_wdt_reset();
+    }
+    delay(1);
+  }
+}
+
 void initWDT()
 {
   esp_task_wdt_init(WDT_TIMEOUT, true);  // enable panic so ESP32 restarts
@@ -34,13 +48,13 @@ void initWDT()
 void initWifi()
 {
   // let the device be active a while before we try to connect to WIFI
-  delay(1000);
+  delayWithPatWatchdog(1001);
 
   // Connect to WiFi
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED)
   {
-    delay(1000);
+    delayWithPatWatchdog(1001);
 
     Serial.println("Connecting to WiFi...");
 
@@ -74,13 +88,25 @@ void initTime()
   Serial.println("got NTP time");
 }
 
-void enumerateDevices()
-{
-  
-}
-
 void initSensors()
 {
+  uint8_t mac_address[8];
+  esp_efuse_mac_get_default(mac_address);
+
+  for (int i = 0; i<8; i++)
+  {
+      sprintf(&esp32_macaddress[i*2], "%X", mac_address[i]);
+      Serial.printf("%X", mac_address[i]);
+  }
+  Serial.println();
+  Serial.print("esp32_macaddress: ");
+  //Serial.println(esp32_macaddress);
+  for (int i = 0; i < 16; i++)
+  {
+    Serial.printf("%c", esp32_macaddress[i]);
+  }
+  Serial.println();
+
   byte i;
   DeviceAddress addr;
 
@@ -89,26 +115,38 @@ void initSensors()
   int cnt = sensors.getDeviceCount();
   int cnt2 = 0;
 
+  oneWire.reset_search();
+
   while (oneWire.search(addr))
   {
+//    Serial.println("got onewire device");
     memcpy(sensorIds[cnt2], addr, 8);
 
-    sprintf(sensorNames[cnt2],   "%1x%1x%1x%1x", addr[0], addr[1], addr[2], addr[3]);
-    sprintf(sensorNames[cnt2]+8, "%1x%1x%1x%1x", addr[0], addr[1], addr[2], addr[3]);
+    for (int i = 0; i<8; i++)
+    {
+        sprintf(&sensorNames[cnt2][i*2], "%X", addr[i]);
+        //Serial.printf("%X ", mac_address[i]);
+    }
+//    sprintf(sensorNames[cnt2],   "%1X%1X%1X%1X", addr[0], addr[1], addr[2], addr[3]);
+//    sprintf(sensorNames[cnt2]+8, "%1X%1X%1X%1X", addr[4], addr[5], addr[6], addr[7]);
 
+#define _ADDRESS
 #ifdef PRINT_ADDRESS
     Serial.print(" ROM =");
     for (i = 0; i < 8; i++)
     {
       Serial.write(' ');
       Serial.print(addr[i], HEX);
-      cnt2++;
     }
     Serial.println();
+
+    Serial.println(sensorNames[cnt2]);
+    cnt2++;
   }
   Serial.println(" No more addresses.");
   Serial.println();
 #else
+    cnt2++;
   }
 #endif
 
@@ -117,7 +155,7 @@ void initSensors()
 
   if (cnt2 != cnt)
   {
-    Serial.println("Warning: number of devices incorrect!");
+    Serial.printf("Warning: number of devices incorrect! %d/%d", cnt,cnt2);
   }
 
   numberOfSensors = cnt;
@@ -174,12 +212,12 @@ void loop()
   if (firstRun == true)
   {
       Serial.println("first run - add a random delay");
-      delay(random(update_period_s * 1000));
+      delayWithPatWatchdog(random(update_period_s * 1000));
       firstRun = false;
   }
 
   // Wait before sending the next reading
-  delay(60 * 1000);
+  delayWithPatWatchdog(60 * 1000);
   pollCounter++;
 }
 
@@ -205,6 +243,9 @@ void sendJsonToRestServer(float temperature, const char *sensorName)
    
   strftime(currentTimeString, sizeof(currentTimeString), "%Y-%m-%dT%H:%M:%S-01:00", &ts);
 
+//  char fullSensorName[34];
+//  sprintf(fullSensorName, "%s_%s", esp32_macaddress, sensorName);
+
   // Create JSON object with temperature reading
   StaticJsonDocument<200> doc;
   doc["sensor_id"] = sensorName;
@@ -218,6 +259,11 @@ void sendJsonToRestServer(float temperature, const char *sensorName)
   serializeJson(doc, jsonString);
 
   Serial.println(jsonString);
+
+#ifdef DRY_RUN
+  Serial.println("DRYRUN");
+  return;
+#endif
 
   do
   {

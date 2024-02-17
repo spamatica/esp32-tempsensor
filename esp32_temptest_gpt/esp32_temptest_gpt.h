@@ -1,6 +1,8 @@
 #ifndef ESP32_TEMPTEST_GPT_HH
 #define ESP32_TEMPTEST_GPT_HH
 
+//#define DRY_RUN
+
 // NTP server and time zone´
 const char* ntpServer = "pool.ntp.org"                                                                                                                                            ;
 const long gmtOffset_sec = 3600;
@@ -13,11 +15,12 @@ bool firstRun = true;
 int errorCount = 0;
 int pollCounter = 0;
 
-#define WDT_TIMEOUT 3     // define a 3 seconds WDT (Watch Dog Timer)
+#define WDT_TIMEOUT 10     // define a 3 seconds WDT (Watch Dog Timer)
 #define MAX_NUM_SENSORS 5
 
+char esp32_macaddress[17] = {0};
 int8_t numberOfSensors = 2;
-char sensorNames[MAX_NUM_SENSORS][17] = { 0 };
+char sensorNames[MAX_NUM_SENSORS][18] = { 0 };
 
 DeviceAddress sensorIds[MAX_NUM_SENSORS] = { 0 };
 
