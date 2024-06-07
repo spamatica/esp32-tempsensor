@@ -4,16 +4,15 @@
 #include <DallasTemperature.h>
 
 //#define DRY_RUN
-#define         WDT_TIMEOUT_S                 10     // Watch Dog Timer timeout in seconds
-#define         MAX_NUM_SENSORS             5
-#define         UPDATE_PERIOD_S             600    // UPDATE PERIOD IN SECONDS
+#define WDT_TIMEOUT_S               10     // Watch Dog Timer timeout in seconds
+#define MAX_NUM_SENSORS             5
+#define UPDATE_PERIOD_S             600    // UPDATE PERIOD IN SECONDS
+#define ONEWIRE_USED_PIN            4
 
 // NTP server and time zone´
 extern const char*     ntpServer;
 extern const long      gmtOffset_sec;
 extern const int       daylightOffset_sec;
-
-extern const int       oneWirePin;
 
 extern bool            firstRun;
 

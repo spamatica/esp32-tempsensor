@@ -2,6 +2,7 @@
 #include <WiFi.h>
 #include <ArduinoJson.h>
 
+#include "network.h"
 #include "esp32_temptest_gpt.h"
 #include "watchdog.h"
 #include "local_config.h"
@@ -11,17 +12,16 @@
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, ntpServer, gmtOffset_sec, daylightOffset_sec);
 
-
-void initWifi()
+void Network::initWifi(Watchdog &watchdog)
 {
   // let the device be active a while before we try to connect to WIFI
-  delayWithPatWatchdog(1001);
+  watchdog.delayWithPatWatchdog(1001);
 
   // Connect to WiFi
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED)
   {
-    delayWithPatWatchdog(1001);
+    watchdog.delayWithPatWatchdog(1001);
 
     Serial.println("Connecting to WiFi...");
 
@@ -40,7 +40,7 @@ void initWifi()
 }
 
 
-void initTime()
+void Network::initTime()
 {
   // Initialize NTP client and update time
   timeClient.begin();
@@ -56,7 +56,7 @@ void initTime()
   Serial.println("got NTP time");
 }
 
-void sendJsonToRestServer(float temperature, const char *sensorName)
+void Network::sendJsonToRestServer(float temperature, const char *sensorName)
 {
   // Create JSON document  // format current time for inserting into json data
   char currentTimeString[80];
@@ -123,7 +123,7 @@ void sendJsonToRestServer(float temperature, const char *sensorName)
   Serial.println("Send json successful");
 }
 
-unsigned long network_get_time()
+unsigned long Network::get_time()
 {
     return timeClient.getEpochTime();
 }

@@ -1,8 +1,8 @@
 #include <DallasTemperature.h>
 #include "esp32_temptest_gpt.h"
 
-// NTP server and time zone´
-const char*     ntpServer                   = "pool.ntp.org"                                                                                                                                            ;
+// NTP server and time zone
+const char*     ntpServer                   = "pool.ntp.org";
 const long      gmtOffset_sec               = 3600;
 const int       daylightOffset_sec          = 3600;
 

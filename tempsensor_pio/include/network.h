@@ -1,11 +1,19 @@
 #ifndef TEMPSENS_NETWORK_HH
 #define TEMPSENS_NETWORK_HH
 
-void initWifi();
-void initTime();
+#include "watchdog.h"
 
-void sendJsonToRestServer(float temperature, const char *sensorName);
-unsigned long network_get_time();
+class Network {
+
+public:
+  void initWifi(Watchdog &watchdog);
+  void initTime();
+
+  void sendJsonToRestServer(float temperature, const char *sensorName);
+  unsigned long get_time();
+
+};
+
 
 
 #endif // TEMPSENS_NETWORK_HH

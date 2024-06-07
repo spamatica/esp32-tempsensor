@@ -6,7 +6,7 @@
 
 
 // DS18B20 device
-OneWire oneWire(oneWirePin);
+OneWire oneWire(ONEWIRE_USED_PIN);
 DallasTemperature sensors(&oneWire);
 
 void initSensors()

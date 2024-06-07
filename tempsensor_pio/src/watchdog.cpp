@@ -2,8 +2,9 @@
 #include <esp32-hal.h>
 
 #include "esp32_temptest_gpt.h"
+#include "watchdog.h"
 
-void delayWithPatWatchdog(int ms)
+void Watchdog::delayWithPatWatchdog(int ms)
 {
   int incr = 0;
   while (incr != ms)
@@ -17,7 +18,7 @@ void delayWithPatWatchdog(int ms)
   }
 }
 
-void initWDT()
+void Watchdog::initWDT()
 {
   esp_task_wdt_init(WDT_TIMEOUT_S, true);  // enable panic so ESP32 restarts
   esp_task_wdt_add(NULL);                // add current thread to WDT watch
@@ -28,7 +29,7 @@ void initWDT()
   // ESP_RST_POWERON == normal power on
 }
 
-void resetWDT()
+void Watchdog::resetWDT()
 {
 	esp_task_wdt_reset();
 }

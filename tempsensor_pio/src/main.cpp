@@ -6,27 +6,30 @@
 #include "network.h"
 #include "tempsensor.h"
 
+Network network;
+Watchdog watchdog;
 
 void setup()
 {
-  initWDT();
+  watchdog.initWDT();
 
   Serial.begin(115200);
 
-  initWifi();
+  network.initWifi(watchdog);
 
   initSensors();
 
-  initTime();
+  network.initTime();
 }
 
 void loop()
 {
-  resetWDT();            // Reset the Watch Dog Timer
+  watchdog.resetWDT();            // Reset the Watch Dog Timer every loop
 
   Serial.println("going through temp read loop");
-  time_t currentTime = network_get_time();
+  time_t currentTime = network.get_time();
 
+  
   for (int i = 0; i < numberOfSensors; i++)
   {
     // Read temperature from sensor
@@ -48,7 +51,7 @@ void loop()
     {
       Serial.println("time to send");
       lastSendTime[i] = currentTime;
-      sendJsonToRestServer(smoothedTemperature[i], sensorNames[i]);
+      network.sendJsonToRestServer(smoothedTemperature[i], sensorNames[i]);
     }
   }
 
@@ -58,12 +61,12 @@ void loop()
   if (firstRun == true)
   {
       Serial.println("first run - add a random delay");
-      delayWithPatWatchdog(random(UPDATE_PERIOD_S * 1000));
+      watchdog.delayWithPatWatchdog(random(UPDATE_PERIOD_S * 1000));
       firstRun = false;
   }
 
   // Wait before sending the next reading
-  delayWithPatWatchdog(60 * 1000);
+  watchdog.delayWithPatWatchdog(60 * 1000);
   pollCounter++;
 }
 
