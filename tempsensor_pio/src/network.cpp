@@ -10,7 +10,7 @@
 
 
 WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, ntpServer, gmtOffset_sec, daylightOffset_sec);
+NTPClient timeClient(ntpUDP, cfg.ntpServer, cfg.gmtOffset_sec, cfg.daylightOffset_sec);
 
 void Network::initWifi(Watchdog &watchdog)
 {
@@ -25,15 +25,15 @@ void Network::initWifi(Watchdog &watchdog)
 
     Serial.println("Connecting to WiFi...");
 
-    errorCount++;
+    cfg.errorCount++;
 
-    if (errorCount > 6)
+    if (cfg.errorCount > 6)
     {
       ESP.restart();
     }
   }
 
-  errorCount = 0;
+  cfg.errorCount = 0;
   // Print WiFi information
   Serial.println("Connected to the WiFi network");
   Serial.println(WiFi.localIP());
@@ -48,7 +48,7 @@ void Network::initTime()
   while (timeClient.update() == false)
   {
     // We failed to get a valid time from NTP
-    errorCount++;
+    cfg.errorCount++;
 
     Serial.println("Failed to get NTP time");
   }
@@ -74,7 +74,7 @@ void Network::sendJsonToRestServer(float temperature, const char *sensorName)
   doc["sensor_id"] = sensorName;
   doc["temperature"] = temperature;
   doc["timestamp"] = currentTimeString;
-  doc["sensor_uptime"] = pollCounter;
+  doc["sensor_uptime"] = cfg.pollCounter;
 
   // Convert JSON object to string
   String jsonString;
@@ -104,21 +104,21 @@ void Network::sendJsonToRestServer(float temperature, const char *sensorName)
     {
       Serial.printf("Response code: %d\n", httpCode);
       Serial.println(http.getString());
-      errorCount = 0;
+      cfg.errorCount = 0;
     }
     else
     {
       Serial.printf("Error sending POST request: %s\n", http.errorToString(httpCode).c_str());
-      errorCount++;
+      cfg.errorCount++;
       delay(1000);
     }
 
-    if (errorCount > 5)
+    if (cfg.errorCount > 5)
     {
       ESP.restart();
     }
 
-  } while (errorCount > 0);
+  } while (cfg.errorCount > 0);
 
   Serial.println("Send json successful");
 }

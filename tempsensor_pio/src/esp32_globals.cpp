@@ -1,25 +1,28 @@
-#include <DallasTemperature.h>
 #include "esp32_temptest_gpt.h"
 
+TemperatureConfig cfg;
+
 // NTP server and time zone
-const char*     ntpServer                   = "pool.ntp.org";
-const long      gmtOffset_sec               = 3600;
-const int       daylightOffset_sec          = 3600;
+void initGlobals()
+{
+  strcpy(cfg.ntpServer,"pool.ntp.org");
 
-const int       oneWirePin                  = 4;
+  cfg.gmtOffset_sec               = 3600;
+  cfg.daylightOffset_sec          = 3600;
+  cfg.firstRun                    = true;
 
-bool            firstRun                    = true;
+  cfg.errorCount                  = 0;
+  cfg.pollCounter                 = 0;
 
-int             errorCount                  = 0;
-int             pollCounter                 = 0;
+  cfg.esp32_macaddress[17]        = {0};
+  cfg.numberOfSensors             = 2;
 
-char            esp32_macaddress[17]        = {0};
-int8_t          numberOfSensors             = 2;
+  cfg.sensorNames[MAX_NUM_SENSORS][18]      = { 0 };
 
-char            sensorNames[MAX_NUM_SENSORS][18]      = { 0 };
+  // @todo Fix initialization
+  //cfg.sensorIds[MAX_NUM_SENSORS]            = { 0 };
 
-DeviceAddress   sensorIds[MAX_NUM_SENSORS]            = { 0 };
+  cfg.lastSendTime[MAX_NUM_SENSORS]         = {0};
 
-time_t          lastSendTime[MAX_NUM_SENSORS]         = {0};
-
-float           smoothedTemperature[MAX_NUM_SENSORS]  = {0.0};
+  cfg.smoothedTemperature[MAX_NUM_SENSORS]  = {0.0};
+}

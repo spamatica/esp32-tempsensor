@@ -16,7 +16,7 @@ void initSensors()
 
   for (int i = 0; i<8; i++)
   {
-      sprintf(&esp32_macaddress[i*2], "%X", mac_address[i]);
+      sprintf(&cfg.esp32_macaddress[i*2], "%X", mac_address[i]);
       Serial.printf("%X", mac_address[i]);
   }
   Serial.println();
@@ -24,7 +24,7 @@ void initSensors()
   //Serial.println(esp32_macaddress);
   for (int i = 0; i < 16; i++)
   {
-    Serial.printf("%c", esp32_macaddress[i]);
+    Serial.printf("%c", cfg.esp32_macaddress[i]);
   }
   Serial.println();
 
@@ -41,11 +41,11 @@ void initSensors()
   while (oneWire.search(addr))
   {
 //    Serial.println("got onewire device");
-    memcpy(sensorIds[cnt2], addr, 8);
+    memcpy(cfg.sensorIds[cnt2], addr, 8);
 
     for (int i = 0; i<8; i++)
     {
-        sprintf(&sensorNames[cnt2][i*2], "%X", addr[i]);
+        sprintf(&cfg.sensorNames[cnt2][i*2], "%X", addr[i]);
         //Serial.printf("%X ", mac_address[i]);
     }
 //    sprintf(sensorNames[cnt2],   "%1X%1X%1X%1X", addr[0], addr[1], addr[2], addr[3]);
@@ -79,7 +79,7 @@ void initSensors()
     Serial.printf("Warning: number of devices incorrect! %d/%d", cnt,cnt2);
   }
 
-  numberOfSensors = cnt;
+  cfg.numberOfSensors = cnt;
 }
 
 float readTemperature(DeviceAddress sensorId)

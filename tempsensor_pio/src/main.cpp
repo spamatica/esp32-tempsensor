@@ -29,45 +29,45 @@ void loop()
   Serial.println("going through temp read loop");
   time_t currentTime = network.get_time();
 
-  
-  for (int i = 0; i < numberOfSensors; i++)
+
+  for (int i = 0; i < cfg.numberOfSensors; i++)
   {
     // Read temperature from sensor
-    float temperature = readTemperature(sensorIds[i]);
+    float temperature = readTemperature(cfg.sensorIds[i]);
     Serial.printf("got temperature %f\n", temperature);
 
     // Smooth temperature reading
-    if (firstRun == true)
+    if (cfg.firstRun == true)
     {
-      smoothedTemperature[i] = temperature;
-      lastSendTime[i] = currentTime;
+      cfg.smoothedTemperature[i] = temperature;
+      cfg.lastSendTime[i] = currentTime;
     }
     else
     {
-      smoothedTemperature[i] = smoothedTemperature[i] * 0.95 + temperature * 0.05;
+      cfg.smoothedTemperature[i] = cfg.smoothedTemperature[i] * 0.95 + temperature * 0.05;
     }
 
-    if (firstRun || (currentTime - lastSendTime[i] > UPDATE_PERIOD_S))
+    if (cfg.firstRun || (currentTime - cfg.lastSendTime[i] > UPDATE_PERIOD_S))
     {
       Serial.println("time to send");
-      lastSendTime[i] = currentTime;
-      network.sendJsonToRestServer(smoothedTemperature[i], sensorNames[i]);
+      cfg.lastSendTime[i] = currentTime;
+      network.sendJsonToRestServer(cfg.smoothedTemperature[i], cfg.sensorNames[i]);
     }
   }
 
   // first run? make a random delay before continuing
   // This is done so not all sensors that are started at the same time
   // - maybe due to a power-out - will not report at the same time.
-  if (firstRun == true)
+  if (cfg.firstRun == true)
   {
       Serial.println("first run - add a random delay");
       watchdog.delayWithPatWatchdog(random(UPDATE_PERIOD_S * 1000));
-      firstRun = false;
+      cfg.firstRun = false;
   }
 
   // Wait before sending the next reading
   watchdog.delayWithPatWatchdog(60 * 1000);
-  pollCounter++;
+  cfg.pollCounter++;
 }
 
 
